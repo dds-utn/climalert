@@ -23,4 +23,5 @@ public class Clima {
         this.fechaActualizacion = LocalDateTime.now();
         this.procesado = false;
     }
+    // yo estuve aqui
 } 
