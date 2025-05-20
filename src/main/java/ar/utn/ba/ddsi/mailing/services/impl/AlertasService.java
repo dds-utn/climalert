@@ -62,9 +62,7 @@ public class AlertasService implements IAlertasService {
     }
 
     private boolean cumpleCondicionesAlerta(Clima clima) {
-        //TODO: podríamos refactorizar el diseño para que no sea un simple método, pues puede ser más complejo
-        return clima.getTemperaturaCelsius() > TEMPERATURA_ALERTA && 
-               clima.getHumedad() > HUMEDAD_ALERTA;
+        return clima.tieneAlertaActiva();
     }
 
     private void generarYEnviarEmail(Clima clima) {
