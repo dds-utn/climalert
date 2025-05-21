@@ -50,7 +50,8 @@ public class AlertasService implements IAlertasService {
                 .flatMap(climas -> {
                     climas.stream()
                             .filter(condicionAlerta::cumpleCondicionAlerta)
-                            .forEach(this::generarYEnviarEmail);
+                            .map(this::generarAlerta)
+                            .forEach(this::enviarEmail);
 
                     // Marcar todos como procesados
                     climas.forEach(clima -> {
@@ -67,9 +68,12 @@ public class AlertasService implements IAlertasService {
                 .then();
     }
 
-    private void generarYEnviarEmail(Clima clima) {
+    private Alerta generarAlerta(Clima clima) {
         Alerta alerta = Alerta.of("Alerta de Clima - Condiciones Extremas", clima.getCiudad(), clima.getTemperaturaCelsius(), clima.getHumedad(), clima.getCondicion(), clima.getVelocidadVientoKmh());
         alertaRepository.save(alerta);
+        return alerta;
+    }
+    private void enviarEmail(Alerta alerta) {
 
         for (String destinatario : destinatarios) {
             EmailInput emailInput = EmailInput.of(destinatario,remitente,alerta.getAsunto(),alerta.getMensaje());
@@ -77,6 +81,6 @@ public class AlertasService implements IAlertasService {
         }
 
         logger.info("Email de alerta generado para {} - Enviado a {} destinatarios",
-                clima.getCiudad(), destinatarios.size());
+                alerta.getCiudad(), destinatarios.size());
     }
 } 
