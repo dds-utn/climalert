@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface IClimaRepository {
-    Clima save(Clima clima);
+    void save(Clima clima);
     List<Clima> findAll();
     Optional<Clima> findById(Long id);
     Optional<Clima> findByCiudad(String ciudad);

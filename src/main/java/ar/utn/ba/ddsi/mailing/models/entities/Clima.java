@@ -1,11 +1,14 @@
 package ar.utn.ba.ddsi.mailing.models.entities;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
+
 import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class Clima {
     private Long id;
     private String ciudad;
@@ -19,8 +22,19 @@ public class Clima {
     private LocalDateTime fechaActualizacion;
     private boolean procesado;
 
-    public Clima() {
-        this.fechaActualizacion = LocalDateTime.now();
-        this.procesado = false;
+    public static Clima of(String ciudad, String region, String pais, Double temperaturaCelsius, Double temperaturaFahrenheit, String coindicion, Double velocidadVientoKmh, Integer humedad, LocalDateTime fechaActualizacion) {
+        return Clima
+                .builder()
+                .ciudad(ciudad)
+                .region(region)
+                .pais(pais)
+                .temperaturaCelsius(temperaturaCelsius)
+                .temperaturaFahrenheit(temperaturaFahrenheit)
+                .condicion(coindicion)
+                .velocidadVientoKmh(velocidadVientoKmh)
+                .humedad(humedad)
+                .fechaActualizacion(fechaActualizacion)
+                .procesado(false)
+                .build();
     }
-} 
+}

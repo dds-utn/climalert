@@ -13,7 +13,7 @@ public class ClimaRepository implements IClimaRepository {
     private final AtomicLong idGenerator = new AtomicLong(1);
 
     @Override
-    public Clima save(Clima clima) {
+    public void save(Clima clima) {
         if (clima.getId() == null) {
             Long id = idGenerator.getAndIncrement();
             clima.setId(id);
@@ -23,7 +23,6 @@ public class ClimaRepository implements IClimaRepository {
             climas.put(clima.getId(), clima);
             ciudadToId.put(clima.getCiudad(), clima.getId());
         }
-        return clima;
     }
 
     @Override
@@ -45,8 +44,8 @@ public class ClimaRepository implements IClimaRepository {
     @Override
     public List<Clima> findByProcesado(boolean procesado) {
         return climas.values().stream()
-            .filter(c -> c.isProcesado() == procesado)
-            .toList();
+                .filter(c -> c.isProcesado() == procesado)
+                .toList();
     }
 
     @Override

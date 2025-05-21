@@ -1,11 +1,12 @@
 package ar.utn.ba.ddsi.mailing.services;
 
-import ar.utn.ba.ddsi.mailing.models.entities.Email;
+import ar.utn.ba.ddsi.mailing.models.dto.inputs.EmailInput;
+import ar.utn.ba.ddsi.mailing.models.dto.outputs.EmailOutput;
 import java.util.List;
 
 public interface IEmailService {
-    Email crearEmail(Email email);
-    List<Email> obtenerEmails(Boolean pendiente);
+    EmailOutput crearEmail(EmailInput emailInput);
+    List<EmailOutput> obtenerEmails(Boolean pendiente);
     void procesarPendientes();
     void loguearEmailsPendientes();
 } 
