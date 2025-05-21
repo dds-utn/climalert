@@ -3,6 +3,7 @@ package ar.utn.ba.ddsi.mailing.services.impl;
 import ar.utn.ba.ddsi.mailing.models.dto.inputs.EmailInput;
 import ar.utn.ba.ddsi.mailing.models.entities.Alerta;
 import ar.utn.ba.ddsi.mailing.models.entities.Clima;
+import ar.utn.ba.ddsi.mailing.models.repositories.IAlertaRepository;
 import ar.utn.ba.ddsi.mailing.models.repositories.IClimaRepository;
 import ar.utn.ba.ddsi.mailing.services.IAlertasService;
 import ar.utn.ba.ddsi.mailing.services.ICondicionAlerta;
@@ -18,17 +19,20 @@ import java.util.List;
 public class AlertasService implements IAlertasService {
     private static final Logger logger = LoggerFactory.getLogger(AlertasService.class);
     private final ICondicionAlerta condicionAlerta;
+    private final IAlertaRepository alertaRepository;
     private final IClimaRepository climaRepository;
     private final EmailService emailService;
     private final String remitente;
     private final List<String> destinatarios;
 
     public AlertasService(
+            IAlertaRepository alertaRepository,
             IClimaRepository climaRepository,
             EmailService emailService,
             ICondicionAlerta condicionAlerta,
             @Value("${email.alertas.remitente}") String remitente,
             @Value("${email.alertas.destinatarios}") String destinatarios) {
+        this.alertaRepository = alertaRepository;
         this.climaRepository = climaRepository;
         this.emailService = emailService;
         this.remitente = remitente;
@@ -65,6 +69,7 @@ public class AlertasService implements IAlertasService {
 
     private void generarYEnviarEmail(Clima clima) {
         Alerta alerta = Alerta.of("Alerta de Clima - Condiciones Extremas", clima.getCiudad(), clima.getTemperaturaCelsius(), clima.getHumedad(), clima.getCondicion(), clima.getVelocidadVientoKmh());
+        alertaRepository.save(alerta);
 
         for (String destinatario : destinatarios) {
             EmailInput emailInput = EmailInput.of(destinatario,remitente,alerta.getAsunto(),alerta.getMensaje());
