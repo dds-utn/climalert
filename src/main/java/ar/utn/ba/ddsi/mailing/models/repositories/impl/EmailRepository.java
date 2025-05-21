@@ -12,7 +12,7 @@ public class EmailRepository implements IEmailRepository {
     private final AtomicLong idGenerator = new AtomicLong(1);
 
     @Override
-    public Email save(Email email) {
+    public void save(Email email) {
         if (email.getId() == null) {
             // Es un nuevo email
             Long id = idGenerator.getAndIncrement();
@@ -22,7 +22,6 @@ public class EmailRepository implements IEmailRepository {
             // Es una actualización
             emails.put(email.getId(), email);
         }
-        return email;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package ar.utn.ba.ddsi.mailing.services.impl;
 
+import ar.utn.ba.ddsi.mailing.models.dto.inputs.ClimaInput;
 import ar.utn.ba.ddsi.mailing.models.entities.Clima;
 import ar.utn.ba.ddsi.mailing.models.repositories.IClimaRepository;
 import ar.utn.ba.ddsi.mailing.models.dto.external.weatherapi.WeatherResponse;
@@ -16,8 +17,8 @@ import reactor.core.publisher.Mono;
 public class ClimaService implements IClimaService {
     private static final Logger logger = LoggerFactory.getLogger(ClimaService.class);
     private static final String[] CIUDADES_ARGENTINA = {
-        "Buenos Aires", "Cordoba", "Rosario", "Mendoza", "Tucuman",
-        "La Plata", "Mar del Plata", "Salta", "Santa Fe", "San Juan"
+            "Buenos Aires", "Cordoba", "Rosario", "Mendoza", "Tucuman",
+            "La Plata", "Mar del Plata", "Salta", "Santa Fe", "San Juan"
     };
 
     private final IClimaRepository climaRepository;
@@ -31,47 +32,55 @@ public class ClimaService implements IClimaService {
         this.climaRepository = climaRepository;
         this.apiKey = apiKey;
         this.webClient = WebClient.builder()
-            .baseUrl(baseUrl)
-            .build();
+                .baseUrl(baseUrl)
+                .build();
     }
 
     @Override
     public Mono<Void> actualizarClimaCiudades() {
         return Flux.fromArray(CIUDADES_ARGENTINA)
-            .flatMap(this::obtenerClimaDeAPI)
-            .flatMap(clima -> {
-                climaRepository.save(clima);
-                logger.info("Clima actualizado para: {}", clima.getCiudad());
-                return Mono.empty();
-            })
-            .onErrorResume(e -> {
-                logger.error("Error al actualizar el clima: {}", e.getMessage());
-                return Mono.empty();
-            })
-            .then();
+                .flatMap(this::obtenerClimaDeAPI)
+                .flatMap(climaInput -> {
+                    Clima clima = Clima.of(
+                            climaInput.getCiudad(),
+                            climaInput.getRegion(),
+                            climaInput.getPais(),
+                            climaInput.getTemperaturaCelsius(),
+                            climaInput.getTemperaturaFahrenheit(),
+                            climaInput.getCondicion(),
+                            climaInput.getVelocidadVientoKmh(),
+                            climaInput.getHumedad(),
+                            climaInput.getFechaActualizacion());
+                    climaRepository.save(clima);
+                    logger.info("Clima actualizado para: {}", clima.getCiudad());
+                    return Mono.empty();
+                })
+                .onErrorResume(e -> {
+                    logger.error("Error al actualizar el clima: {}", e.getMessage());
+                    return Mono.empty();
+                })
+                .then();
     }
 
-    private Mono<Clima> obtenerClimaDeAPI(String ciudad) {
+    private Mono<ClimaInput> obtenerClimaDeAPI(String ciudad) {
         return webClient.get()
-            .uri(uriBuilder -> uriBuilder
-                .path("/current.json")
-                .queryParam("key", apiKey)
-                .queryParam("q", ciudad)
-                .queryParam("aqi", "no")
-                .build())
-            .retrieve()
-            .bodyToMono(WeatherResponse.class)
-            .map(response -> {
-                Clima clima = new Clima();
-                clima.setCiudad(ciudad);
-                clima.setRegion(response.getLocation().getRegion());
-                clima.setPais(response.getLocation().getCountry());
-                clima.setTemperaturaCelsius(response.getCurrent().getTemp_c());
-                clima.setTemperaturaFahrenheit(response.getCurrent().getTemp_f());
-                clima.setCondicion(response.getCurrent().getCondition().getText());
-                clima.setVelocidadVientoKmh(response.getCurrent().getWind_kph());
-                clima.setHumedad(response.getCurrent().getHumidity());
-                return clima;
-            });
+                .uri(uriBuilder -> uriBuilder
+                        .path("/current.json")
+                        .queryParam("key", apiKey)
+                        .queryParam("q", ciudad)
+                        .queryParam("aqi", "no")
+                        .build())
+                .retrieve()
+                .bodyToMono(WeatherResponse.class)
+                .map(response -> {
+                    return ClimaInput.of(ciudad,
+                            response.getLocation().getRegion(),
+                            response.getLocation().getCountry(),
+                            response.getCurrent().getTemp_c(),
+                            response.getCurrent().getTemp_f(),
+                            response.getCurrent().getCondition().getText(),
+                            response.getCurrent().getWind_kph(),
+                            response.getCurrent().getHumidity());
+                });
     }
 } 

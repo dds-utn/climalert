@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface IEmailRepository {
-    Email save(Email email);
+    void save(Email email);
     List<Email> findAll();
     List<Email> findByEnviado(boolean enviado);
     Optional<Email> findById(Long id);

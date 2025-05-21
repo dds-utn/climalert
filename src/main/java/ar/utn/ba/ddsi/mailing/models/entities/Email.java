@@ -1,8 +1,10 @@
 package ar.utn.ba.ddsi.mailing.models.entities;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 @Setter
 @Getter
 public class Email {
@@ -13,12 +15,8 @@ public class Email {
     private String contenido;
     private boolean enviado;
 
-    public Email(String destinatario, String remitente, String asunto, String contenido) {
-        this.destinatario = destinatario;
-        this.remitente = remitente;
-        this.asunto = asunto;
-        this.contenido = contenido;
-        this.enviado = false;
+    public static Email of(String destinatario, String remitente, String asunto, String contenido){
+        return Email.builder().destinatario(destinatario).remitente(remitente).asunto(asunto).contenido(contenido).enviado(false).build();
     }
 
     public void enviar() {
