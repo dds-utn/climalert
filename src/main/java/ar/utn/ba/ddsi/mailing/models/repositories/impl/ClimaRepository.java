@@ -1,6 +1,6 @@
 package ar.utn.ba.ddsi.mailing.models.repositories.impl;
 
-import ar.utn.ba.ddsi.mailing.models.entities.Clima;
+import ar.utn.ba.ddsi.mailing.models.entities.climas.Clima;
 import ar.utn.ba.ddsi.mailing.models.repositories.IClimaRepository;
 import org.springframework.stereotype.Repository;
 import java.util.*;
@@ -18,10 +18,10 @@ public class ClimaRepository implements IClimaRepository {
             Long id = idGenerator.getAndIncrement();
             clima.setId(id);
             climas.put(id, clima);
-            ciudadToId.put(clima.getCiudad(), id);
+            ciudadToId.put(clima.getCiudad().getNombre(), id);
         } else {
             climas.put(clima.getId(), clima);
-            ciudadToId.put(clima.getCiudad(), clima.getId());
+            ciudadToId.put(clima.getCiudad().getNombre(), clima.getId());
         }
         return clima;
     }
@@ -45,7 +45,7 @@ public class ClimaRepository implements IClimaRepository {
     @Override
     public List<Clima> findByProcesado(boolean procesado) {
         return climas.values().stream()
-            .filter(c -> c.isProcesado() == procesado)
+            .filter(c -> c.getProcesado() == procesado)
             .toList();
     }
 

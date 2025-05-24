@@ -17,7 +17,7 @@ public class AlertasScheduler {
 
     @Scheduled(fixedRate = 60000) // Cada 1 minuto
     public void procesarAlertas() {
-        alertasService.generarAlertasYAvisar()
+        alertasService.generarAlertasYGuardar()
             .doOnSuccess(v -> logger.info("Procesamiento de alertas completado"))
             .doOnError(e -> logger.error("Error en el procesamiento de alertas: {}", e.getMessage()))
             .subscribe();

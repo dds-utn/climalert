@@ -1,6 +1,6 @@
 package ar.utn.ba.ddsi.mailing.models.repositories;
 
-import ar.utn.ba.ddsi.mailing.models.entities.Email;
+import ar.utn.ba.ddsi.mailing.models.entities.emails.Email;
 import java.util.List;
 import java.util.Optional;
 

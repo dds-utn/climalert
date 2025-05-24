@@ -1,6 +1,6 @@
 package ar.utn.ba.ddsi.mailing.models.repositories;
 
-import ar.utn.ba.ddsi.mailing.models.entities.Clima;
+import ar.utn.ba.ddsi.mailing.models.entities.climas.Clima;
 import java.util.List;
 import java.util.Optional;
 

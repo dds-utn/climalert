@@ -1,6 +1,8 @@
 package ar.utn.ba.ddsi.mailing.controllers;
 
-import ar.utn.ba.ddsi.mailing.models.entities.Email;
+import ar.utn.ba.ddsi.mailing.models.dto.EmailInputDTO;
+import ar.utn.ba.ddsi.mailing.models.dto.EmailOutputDTO;
+import ar.utn.ba.ddsi.mailing.models.entities.emails.Email;
 import ar.utn.ba.ddsi.mailing.services.IEmailService;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
@@ -15,8 +17,8 @@ public class EmailController {
     }
 
     @PostMapping
-    public Email crearEmail(@RequestBody Email email) {
-        return emailService.crearEmail(email);
+    public EmailOutputDTO crearEmail(@RequestBody EmailInputDTO emailInputDTO) {
+        return emailService.crearEmail(emailInputDTO);
     }
 
     @GetMapping
