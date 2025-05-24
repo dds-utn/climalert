@@ -1,6 +1,6 @@
 package ar.utn.ba.ddsi.mailing.models.repositories.impl;
 
-import ar.utn.ba.ddsi.mailing.models.entities.Email;
+import ar.utn.ba.ddsi.mailing.models.entities.emails.Email;
 import ar.utn.ba.ddsi.mailing.models.repositories.IEmailRepository;
 import org.springframework.stereotype.Repository;
 import java.util.*;

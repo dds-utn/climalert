@@ -1,4 +1,4 @@
-package ar.utn.ba.ddsi.mailing.models.entities;
+package ar.utn.ba.ddsi.mailing.models.entities.emails;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -13,15 +13,14 @@ public class Email {
     private String contenido;
     private boolean enviado;
 
+
     public Email(String destinatario, String remitente, String asunto, String contenido) {
         this.destinatario = destinatario;
         this.remitente = remitente;
         this.asunto = asunto;
         this.contenido = contenido;
         this.enviado = false;
+
     }
 
-    public void enviar() {
-        //TODO: Implementación pendiente. Podríamos usar adapters
-    }
 } 

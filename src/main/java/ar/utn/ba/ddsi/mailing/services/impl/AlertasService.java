@@ -1,9 +1,14 @@
 package ar.utn.ba.ddsi.mailing.services.impl;
 
-import ar.utn.ba.ddsi.mailing.models.entities.Clima;
-import ar.utn.ba.ddsi.mailing.models.entities.Email;
+import ar.utn.ba.ddsi.mailing.models.entities.alerts.Alerta;
+import ar.utn.ba.ddsi.mailing.models.entities.climas.Clima;
+import ar.utn.ba.ddsi.mailing.models.entities.emails.Email;
+import ar.utn.ba.ddsi.mailing.models.repositories.IAlertaRepository;
+import ar.utn.ba.ddsi.mailing.models.repositories.ICiudadRepository;
 import ar.utn.ba.ddsi.mailing.models.repositories.IClimaRepository;
+import ar.utn.ba.ddsi.mailing.models.repositories.impl.AlertaRepository;
 import ar.utn.ba.ddsi.mailing.services.IAlertasService;
+import ar.utn.ba.ddsi.mailing.utils.IAlertDetecter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,43 +20,39 @@ import java.util.List;
 @Service
 public class AlertasService implements IAlertasService {
     private static final Logger logger = LoggerFactory.getLogger(AlertasService.class);
-    private static final double TEMPERATURA_ALERTA = 35.0;
-    private static final int HUMEDAD_ALERTA = 60;
 
     private final IClimaRepository climaRepository;
-    private final EmailService emailService;
-    private final String remitente;
-    private final List<String> destinatarios;
+    private final ICiudadRepository ciudadRepository;
+    private final IAlertDetecter alertDetecter;
+    private final IAlertaRepository alertaRepository;
 
     public AlertasService(
-            IClimaRepository climaRepository, 
-            EmailService emailService,
-            @Value("${email.alertas.remitente}") String remitente,
-            @Value("${email.alertas.destinatarios}") String destinatarios) {
+            IClimaRepository climaRepository,
+            ICiudadRepository ciudadRepository,
+            IAlertDetecter alertDetecter, IAlertaRepository alertaRepository) {
         this.climaRepository = climaRepository;
-        this.emailService = emailService;
-        this.remitente = remitente;
-        this.destinatarios = Arrays.asList(destinatarios.split(","));
+        this.ciudadRepository = ciudadRepository;
+        this.alertDetecter = alertDetecter;
+        this.alertaRepository = alertaRepository;
     }
 
     @Override
-    public Mono<Void> generarAlertasYAvisar() {
-        return Mono.fromCallable(() -> climaRepository.findByProcesado(false))
-            .flatMap(climas -> {
-                logger.info("Procesando {} registros de clima no procesados", climas.size());
-                return Mono.just(climas);
+    public Mono<Void> generarAlertasYGuardar() {
+        return Mono.fromCallable(ciudadRepository::findAll)
+            .flatMap(ciudades -> {
+                logger.info("Procesando climas de ciudades");
+                return Mono.just(ciudades);
             })
-            .flatMap(climas -> {
-                climas.stream()
-                    .filter(this::cumpleCondicionesAlerta)
-                    .forEach(this::generarYEnviarEmail);
-                
-                // Marcar todos como procesados
-                climas.forEach(clima -> {
-                    clima.setProcesado(true);
-                    climaRepository.save(clima);
+            .flatMap(ciudades -> {
+                ciudades.forEach(ciudad -> {
+                    Clima climaMasReciente = ciudad.obtenerClimaMasReciente();
+                    if(!climaMasReciente.getProcesado()  && alertDetecter.cumpleCondicionesAlerta(climaMasReciente)) {
+                        Alerta alerta = this.generarAlerta(climaMasReciente);
+                        alertaRepository.save(alerta);
+                        climaMasReciente.setProcesado(true);
+                        climaRepository.save(climaMasReciente);
+                    }
                 });
-                
                 return Mono.empty();
             })
             .onErrorResume(e -> {
@@ -61,34 +62,15 @@ public class AlertasService implements IAlertasService {
             .then();
     }
 
-    private boolean cumpleCondicionesAlerta(Clima clima) {
-        //TODO: podríamos refactorizar el diseño para que no sea un simple método, pues puede ser más complejo
-        return clima.getTemperaturaCelsius() > TEMPERATURA_ALERTA && 
-               clima.getHumedad() > HUMEDAD_ALERTA;
+    private Alerta generarAlerta(Clima clima) {
+        Alerta alerta = new Alerta();
+        alerta.setCiudad(clima.getCiudad());
+        alerta.setTemperatura(clima.getTemperatura());
+        alerta.setCondicion(clima.getCondicion());
+        alerta.setVelocidadVientoKmh(clima.getVelocidadVientoKmh());
+        alerta.setHumedad(clima.getHumedad());
+        return alerta;
     }
 
-    private void generarYEnviarEmail(Clima clima) {
-        String asunto = "Alerta de Clima - Condiciones Extremas";
-        String mensaje = String.format(
-            "ALERTA: Condiciones climáticas extremas detectadas en %s\n\n" +
-            "Temperatura: %.1f°C\n" +
-            "Humedad: %d%%\n" +
-            "Condición: %s\n" +
-            "Velocidad del viento: %.1f km/h\n\n" +
-            "Se recomienda tomar precauciones.",
-            clima.getCiudad(),
-            clima.getTemperaturaCelsius(),
-            clima.getHumedad(),
-            clima.getCondicion(),
-            clima.getVelocidadVientoKmh()
-        );
 
-        for (String destinatario : destinatarios) {
-            Email email = new Email(destinatario, remitente, asunto, mensaje);
-            emailService.crearEmail(email);
-        }
-        
-        logger.info("Email de alerta generado para {} - Enviado a {} destinatarios", 
-            clima.getCiudad(), destinatarios.size());
-    }
 } 

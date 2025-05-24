@@ -1,6 +1,9 @@
 package ar.utn.ba.ddsi.mailing.services.impl;
 
-import ar.utn.ba.ddsi.mailing.models.entities.Clima;
+import ar.utn.ba.ddsi.mailing.models.entities.climas.Clima;
+import ar.utn.ba.ddsi.mailing.models.entities.Temperatura;
+import ar.utn.ba.ddsi.mailing.models.entities.lugares.Ciudad;
+import ar.utn.ba.ddsi.mailing.models.repositories.ICiudadRepository;
 import ar.utn.ba.ddsi.mailing.models.repositories.IClimaRepository;
 import ar.utn.ba.ddsi.mailing.models.dto.external.weatherapi.WeatherResponse;
 import ar.utn.ba.ddsi.mailing.services.IClimaService;
@@ -15,11 +18,8 @@ import reactor.core.publisher.Mono;
 @Service
 public class ClimaService implements IClimaService {
     private static final Logger logger = LoggerFactory.getLogger(ClimaService.class);
-    private static final String[] CIUDADES_ARGENTINA = {
-        "Buenos Aires", "Cordoba", "Rosario", "Mendoza", "Tucuman",
-        "La Plata", "Mar del Plata", "Salta", "Santa Fe", "San Juan"
-    };
 
+    private final ICiudadRepository ciudadRepository;
     private final IClimaRepository climaRepository;
     private final WebClient webClient;
     private final String apiKey;
@@ -27,21 +27,23 @@ public class ClimaService implements IClimaService {
     public ClimaService(
             IClimaRepository climaRepository,
             @Value("${weather.api.key}") String apiKey,
-            @Value("${weather.api.base-url}") String baseUrl) {
+            @Value("${weather.api.base-url}") String baseUrl,
+            ICiudadRepository ciudadRepository) {
         this.climaRepository = climaRepository;
         this.apiKey = apiKey;
         this.webClient = WebClient.builder()
             .baseUrl(baseUrl)
             .build();
+        this.ciudadRepository = ciudadRepository;
     }
 
     @Override
     public Mono<Void> actualizarClimaCiudades() {
-        return Flux.fromArray(CIUDADES_ARGENTINA)
+        return Flux.fromStream(ciudadRepository.findAll().stream())
             .flatMap(this::obtenerClimaDeAPI)
             .flatMap(clima -> {
                 climaRepository.save(clima);
-                logger.info("Clima actualizado para: {}", clima.getCiudad());
+                logger.info("Clima actualizado para: {}", clima.getCiudad().getNombre());
                 return Mono.empty();
             })
             .onErrorResume(e -> {
@@ -51,12 +53,12 @@ public class ClimaService implements IClimaService {
             .then();
     }
 
-    private Mono<Clima> obtenerClimaDeAPI(String ciudad) {
+    private Mono<Clima> obtenerClimaDeAPI(Ciudad ciudad) {
         return webClient.get()
             .uri(uriBuilder -> uriBuilder
                 .path("/current.json")
                 .queryParam("key", apiKey)
-                .queryParam("q", ciudad)
+                .queryParam("q", ciudad.getNombre())
                 .queryParam("aqi", "no")
                 .build())
             .retrieve()
@@ -64,14 +66,13 @@ public class ClimaService implements IClimaService {
             .map(response -> {
                 Clima clima = new Clima();
                 clima.setCiudad(ciudad);
-                clima.setRegion(response.getLocation().getRegion());
-                clima.setPais(response.getLocation().getCountry());
-                clima.setTemperaturaCelsius(response.getCurrent().getTemp_c());
-                clima.setTemperaturaFahrenheit(response.getCurrent().getTemp_f());
+                clima.setTemperatura(new Temperatura(response.getCurrent().getTemp_c()));
                 clima.setCondicion(response.getCurrent().getCondition().getText());
                 clima.setVelocidadVientoKmh(response.getCurrent().getWind_kph());
                 clima.setHumedad(response.getCurrent().getHumidity());
+                ciudad.agregarClima(clima);
                 return clima;
             });
     }
-} 
+
+}
